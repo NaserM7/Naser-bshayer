@@ -1,0 +1,61 @@
+# Ticket Classes
+class Ticket:
+    def __init__(self, ticket_id: int, ticket_type: str, price: float, validity: str, discount: float = 0.0):
+        self._ticket_id = ticket_id
+        self._ticket_type = ticket_type
+        self._price = price
+        self._validity = validity
+        self._discount = discount
+
+    @property
+    def ticket_id(self):
+        return self._ticket_id
+    
+    @ticket_id.setter
+    def ticket_id(self, value: int):
+        if not isinstance(value, int) or value <= 0:
+            raise ValueError("Ticket ID must be a positive integer.")
+        self._ticket_id = value
+
+    @property
+    def ticket_type(self):
+        return self._ticket_type
+    
+    @ticket_type.setter
+    def ticket_type(self, value: str):
+        if not value.strip():
+            raise ValueError("Ticket type cannot be empty.")
+        self._ticket_type = value
+
+    @property
+    def price(self):
+        return self._price
+    
+    @price.setter
+    def price(self, value: float):
+        if value <= 0:
+            raise ValueError("Price must be a positive value.")
+        self._price = value
+
+    @property
+    def validity(self):
+        return self._validity
+    
+    @validity.setter
+    def validity(self, value: str):
+        if not value.strip():
+            raise ValueError("Validity cannot be empty.")
+        self._validity = value
+
+    @property
+    def discount(self):
+        return self._discount
+    
+    @discount.setter
+    def discount(self, value: float):
+        if value < 0 or value > 1:
+            raise ValueError("Discount must be between 0 and 1.")
+        self._discount = value
+
+    def calculate_price(self):
+        return self.price * (1 - self.discount)
