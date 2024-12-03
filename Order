@@ -1,0 +1,67 @@
+from datetime import datetime
+import Ticket
+# Order Class
+class Order:
+    def __init__(self, order_id: int, customer_name: str):
+        self._order_id = order_id
+        self._customer_name = customer_name
+        self._tickets = []  # List of Ticket objects
+        self._total_amount = 0.0
+        self._date = datetime.now()
+
+    @property
+    def order_id(self):
+        return self._order_id
+    
+    @order_id.setter
+    def order_id(self, value: int):
+        if not isinstance(value, int) or value <= 0:
+            raise ValueError("Order ID must be a positive integer.")
+        self._order_id = value
+
+    @property
+    def customer_name(self):
+        return self._customer_name
+    
+    @customer_name.setter
+    def customer_name(self, value: str):
+        if not value.strip():
+            raise ValueError("Customer name cannot be empty.")
+        self._customer_name = value
+
+    @property
+    def tickets(self):
+        return self._tickets
+    
+    @tickets.setter
+    def tickets(self, value):
+        if not isinstance(value, list):
+            raise ValueError("Tickets must be a list.")
+        self._tickets = value
+
+    @property
+    def total_amount(self):
+        return self._total_amount
+
+    @total_amount.setter
+    def total_amount(self, value):
+        raise ValueError("Total amount is calculated automatically and cannot be set manually.")
+
+    @property
+    def date(self):
+        return self._date
+
+    def add_ticket(self, ticket: Ticket):
+        self.tickets.append(ticket)
+        self.calculate_total()
+
+    def calculate_total(self):
+        self._total_amount = sum(ticket.calculate_price() for ticket in self.tickets)
+        return self._total_amount
+
+    def display_summary(self):
+        ticket_summary = "\n".join([f"{ticket.ticket_type}: {ticket.calculate_price()}" for ticket in self.tickets])
+        return (
+            f"Order ID: {self.order_id}\nCustomer: {self.customer_name}\n"
+            f"Tickets:\n{ticket_summary}\nTotal: {self.total_amount:.2f} DHS\nDate: {self.date.strftime('%Y-%m-%d %H:%M:%S')}"
+        )
