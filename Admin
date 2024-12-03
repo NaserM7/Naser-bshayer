@@ -1,0 +1,52 @@
+# Admin Dashboard Class
+class AdminDashboard:
+    def __init__(self):
+        self._sales_data = []  # List of Orders
+        self._capacity = 10000  # Maximum daily capacity
+        self._ticket_sales = {}  # Track number of tickets sold per type
+
+    @property
+    def sales_data(self):
+        return self._sales_data
+
+    @sales_data.setter
+    def sales_data(self, value):
+        if not isinstance(value, list):
+            raise ValueError("Sales data must be a list.")
+        self._sales_data = value
+
+    @property
+    def capacity(self):
+        return self._capacity
+
+    @capacity.setter
+    def capacity(self, value):
+        if not isinstance(value, int) or value <= 0:
+            raise ValueError("Capacity must be a positive integer.")
+        self._capacity = value
+
+    @property
+    def ticket_sales(self):
+        return self._ticket_sales
+    
+    @ticket_sales.setter
+    def ticket_sales(self, value):
+        if not isinstance(value, dict):
+            raise ValueError("Ticket sales must be a dictionary.")
+        self._ticket_sales = value
+
+    def add_sale(self, order):
+        self.sales_data.append(order)
+        for ticket in order.tickets:
+            self.ticket_sales[ticket.ticket_type] = self.ticket_sales.get(ticket.ticket_type, 0) + 1
+
+    def view_sales_summary(self):
+        if not self.sales_data:
+            return "No sales recorded yet."
+        summary = "\n\n".join([order.display_summary() for order in self.sales_data])
+        return f"Sales Summary:\n{summary}"
+
+    def view_ticket_sales(self):
+        if not self.ticket_sales:
+            return "No tickets sold yet."
+        return "\n".join([f"{ticket_type}: {count}" for ticket_type, count in self.ticket_sales.items()])
