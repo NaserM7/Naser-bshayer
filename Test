@@ -1,0 +1,67 @@
+from Moh import Customer
+from Moh import Ticket
+from Moh import Order
+from Moh import AdminDashboard
+
+# Test Customer Class
+def test_customer_initialization():
+    customer = Customer(1, "John Doe", "john.doe@example.com", "password123")
+    assert customer.customer_id == 1
+    assert customer.name == "John Doe"
+    assert customer.email == "john.doe@example.com"
+    assert customer.password == "password123"
+    assert customer.order_history == []
+
+
+
+def test_add_order_to_customer():
+    customer = Customer(1, "John Doe", "john.doe@example.com", "password123")
+    order = Order(101, "John Doe")
+    customer.add_order(order)
+    assert len(customer.order_history) == 1
+    assert customer.order_history[0] == order
+
+# Test Ticket Class
+def test_ticket_initialization():
+    ticket = Ticket(101, "Single Day Pass", 275, "1 Day", 0.1)
+    assert ticket.ticket_id == 101
+    assert ticket.ticket_type == "Single Day Pass"
+    assert ticket.price == 275
+    assert ticket.validity == "1 Day"
+    assert ticket.discount == 0.1
+
+def test_ticket_price_with_discount():
+    ticket = Ticket(102, "Annual Membership", 1840, "1 Year", 0.15)
+    assert ticket.calculate_price() == 1564  # 1840 * (1 - 0.15)
+
+
+# Test Order Class
+def test_order_initialization():
+    order = Order(2001, "John Doe")
+    assert order.order_id == 2001
+    assert order.customer_name == "John Doe"
+    assert order.total_amount == 0.0
+    assert order.tickets == []
+
+def test_order_add_ticket():
+    order = Order(2001, "John Doe")
+    ticket = Ticket(101, "Single Day Pass", 275, "1 Day")
+    order.add_ticket(ticket)
+    assert len(order.tickets) == 1
+    assert order.calculate_total() == 275
+
+# Test AdminDashboard Class
+def test_admin_dashboard_initialization():
+    dashboard = AdminDashboard()
+    assert dashboard.capacity == 10000
+    assert dashboard.sales_data == []
+    assert dashboard.ticket_sales == {}
+
+def test_admin_add_sale():
+    dashboard = AdminDashboard()
+    order = Order(2001, "John Doe")
+    ticket = Ticket(101, "Single Day Pass", 275, "1 Day")
+    order.add_ticket(ticket)
+    dashboard.add_sale(order)
+    assert len(dashboard.sales_data) == 1
+    assert dashboard.ticket_sales["Single Day Pass"] == 1
