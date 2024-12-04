@@ -5,18 +5,18 @@ from datetime import datetime
 import pickle
 import os
 
-from datetime import datetime
-
-
-# Base Customer Class
+# ------------------ Customer Class ------------------
+# Represents a customer who can book tickets and place orders.
 class Customer:
     def __init__(self, customer_id: int, name: str, email: str, password: str):
+        # Initialize customer details
         self._customer_id = customer_id
         self._name = name
         self._email = email
         self._password = password
-        self._order_history = []  # List of Order objects
+        self._order_history = []  # Stores a list of orders placed by the customer
 
+    # Property methods to access and modify customer attributes
     @property
     def customer_id(self):
         return self._customer_id
@@ -67,19 +67,22 @@ class Customer:
             raise ValueError("Order history must be a list.")
         self._order_history = value
 
+    # Adds a new order to the customer's order history
     def add_order(self, order):
         self.order_history.append(order)
 
-
-# Ticket Classes
+# ------------------ Ticket Class ------------------
+# Represents a ticket that customers can purchase.
 class Ticket:
     def __init__(self, ticket_id: int, ticket_type: str, price: float, validity: str, discount: float = 0.0):
+        # Initialize ticket details
         self._ticket_id = ticket_id
         self._ticket_type = ticket_type
         self._price = price
         self._validity = validity
         self._discount = discount
 
+    # Property methods to access and modify ticket attributes
     @property
     def ticket_id(self):
         return self._ticket_id
@@ -130,19 +133,22 @@ class Ticket:
             raise ValueError("Discount must be between 0 and 1.")
         self._discount = value
 
+    # Calculates the price of the ticket after applying a discount
     def calculate_price(self):
         return self.price * (1 - self.discount)
 
-
-# Order Class
+# ------------------ Order Class ------------------
+# Represents an order containing multiple tickets placed by a customer.
 class Order:
     def __init__(self, order_id: int, customer_name: str):
+        # Initialize order details
         self._order_id = order_id
         self._customer_name = customer_name
-        self._tickets = []  # List of Ticket objects
-        self._total_amount = 0.0
-        self._date = datetime.now()
+        self._tickets = []  # List of tickets in the order
+        self._total_amount = 0.0  # Total price of the order
+        self._date = datetime.now()  # Timestamp for when the order is created
 
+    # Property methods to access and modify order attributes
     @property
     def order_id(self):
         return self._order_id
@@ -185,14 +191,17 @@ class Order:
     def date(self):
         return self._date
 
+    # Adds a ticket to the order and updates the total price
     def add_ticket(self, ticket: Ticket):
         self.tickets.append(ticket)
         self.calculate_total()
 
+    # Calculates the total price of the order based on ticket prices
     def calculate_total(self):
         self._total_amount = sum(ticket.calculate_price() for ticket in self.tickets)
         return self._total_amount
 
+    # Generates a summary of the order details
     def display_summary(self):
         ticket_summary = "\n".join([f"{ticket.ticket_type}: {ticket.calculate_price()}" for ticket in self.tickets])
         return (
@@ -200,14 +209,16 @@ class Order:
             f"Tickets:\n{ticket_summary}\nTotal: {self.total_amount:.2f} DHS\nDate: {self.date.strftime('%Y-%m-%d %H:%M:%S')}"
         )
 
-
-# Admin Dashboard Class
+# ------------------ AdminDashboard Class ------------------
+# Tracks sales, orders, and ticket details.
 class AdminDashboard:
     def __init__(self):
-        self._sales_data = []  # List of Orders
-        self._capacity = 10000  # Maximum daily capacity
-        self._ticket_sales = {}  # Track number of tickets sold per type
+        # Initialize admin dashboard attributes
+        self._sales_data = []  # List of orders for the day
+        self._capacity = 10000  # Maximum number of tickets that can be sold in a day
+        self._ticket_sales = {}  # Dictionary to track ticket sales by type
 
+    # Property methods to access and modify attributes
     @property
     def sales_data(self):
         return self._sales_data
@@ -238,39 +249,43 @@ class AdminDashboard:
             raise ValueError("Ticket sales must be a dictionary.")
         self._ticket_sales = value
 
+    # Adds an order to the sales data and updates ticket sales statistics
     def add_sale(self, order):
         self.sales_data.append(order)
         for ticket in order.tickets:
             self.ticket_sales[ticket.ticket_type] = self.ticket_sales.get(ticket.ticket_type, 0) + 1
 
+    # Returns a summary of all sales
     def view_sales_summary(self):
         if not self.sales_data:
             return "No sales recorded yet."
         summary = "\n\n".join([order.display_summary() for order in self.sales_data])
         return f"Sales Summary:\n{summary}"
 
+    # Returns a summary of ticket sales by type
     def view_ticket_sales(self):
         if not self.ticket_sales:
             return "No tickets sold yet."
         return "\n".join([f"{ticket_type}: {count}" for ticket_type, count in self.ticket_sales.items()])
 
-
-# GUI Application
+# ------------------ GUI Application ------------------
+# Represents the main application interface for the ticket booking system.
 class TicketBookingApp:
     def __init__(self, root):
+        # Initialize the main application window
         self.root = root
-        self.root.title("Adventure Land Ticket Booking")
-        self.root.geometry("800x600")
+        self.root.title("Adventure Land Ticket Booking")  # Set the window title
+        self.root.geometry("800x600")  # Set the window dimensions
 
-        # Initialize data
-        self.customers = self.load_data("customers.pkl") or {}  # email -> Customer object
-        self.orders = []  # List of all orders
-        self.current_customer = None
-        self.current_order = None
-        self.ticket_id_counter = 1001
-        self.order_id_counter = 2001
+        # Initialize data structures for managing customers, orders, and tickets
+        self.customers = self.load_data("customers.pkl") or {}  # Stores customer data (email -> Customer object)
+        self.orders = []  # List of all orders placed in the system
+        self.current_customer = None  # Tracks the logged-in customer
+        self.current_order = None  # Tracks the current order being created
+        self.ticket_id_counter = 1001  # Counter for assigning unique ticket IDs
+        self.order_id_counter = 2001  # Counter for assigning unique order IDs
 
-        # Ticket types
+        # Define available ticket types
         self.available_tickets = self.load_data("tickets.pkl") or [
             Ticket(101, "Single Day Pass", 275, "1 Day"),
             Ticket(102, "Two-Day Pass", 480, "2 Days"),
@@ -280,85 +295,101 @@ class TicketBookingApp:
             Ticket(106, "VIP Experience", 550, "1 Day"),
         ]
 
-        # Admin dashboard
+        # Admin dashboard to track sales and manage data
         self.admin_dashboard = self.load_data("admin_dashboard.pkl") or AdminDashboard()
 
-        # Predefined admin credentials
+        # Predefined admin credentials for login
         self.admin_credentials = {"admin": "admin123"}
 
-        # Build UI
+        # Build the initial login screen
         self.build_login_screen()
 
+    # Clears all widgets from the current screen
     def clear_screen(self):
         for widget in self.root.winfo_children():
             widget.destroy()
 
+    # Saves data to a file using pickle
     def save_data(self, filename, data):
         with open(filename, "wb") as file:
             pickle.dump(data, file)
 
+    # Loads data from a file using pickle
     def load_data(self, filename):
         if os.path.exists(filename):
             with open(filename, "rb") as file:
                 return pickle.load(file)
         return None
 
-    # --- Login Screen ---
+    # ------------------ Login Screen ------------------
+    # Builds the login screen for both customers and admins
     def build_login_screen(self):
-        self.clear_screen()
-        tk.Label(self.root, text="Ticket Booking System for Advanture Land", font=("Arial", 20)).pack(pady=20)
+        self.clear_screen()  # Clear the screen
+        tk.Label(self.root, text="Ticket Booking System for Adventure Land", font=("Arial", 20)).pack(pady=20)
         tk.Label(self.root, text="Login or Create an Account", font=("Arial", 14)).pack(pady=10)
 
+        # Email input field
         tk.Label(self.root, text="Email/Username:").pack(pady=5)
         self.email_entry = tk.Entry(self.root, width=30)
         self.email_entry.pack()
 
+        # Password input field
         tk.Label(self.root, text="Password:").pack(pady=5)
         self.password_entry = tk.Entry(self.root, width=30, show="*")
         self.password_entry.pack()
 
+        # Buttons for login, account creation, and admin login
         tk.Button(self.root, text="Login", command=self.login).pack(pady=10)
         tk.Button(self.root, text="Create an Account", command=self.create_account_screen).pack(pady=5)
         tk.Button(self.root, text="Admin Login", command=self.admin_login).pack(pady=5)
 
-    # --- Admin Login ---
+    # ------------------ Admin Login ------------------
+    # Handles admin login functionality
     def admin_login(self):
-        username = self.email_entry.get()
-        password = self.password_entry.get()
+        username = self.email_entry.get()  # Retrieve entered username
+        password = self.password_entry.get()  # Retrieve entered password
 
+        # Check if credentials match predefined admin credentials
         if username in self.admin_credentials and self.admin_credentials[username] == password:
-            self.build_admin_dashboard()
+            self.build_admin_dashboard()  # Navigate to the admin dashboard
         else:
             messagebox.showerror("Error", "Invalid admin credentials.")
 
-    # --- Admin Dashboard ---
+    # ------------------ Admin Dashboard ------------------
+    # Builds the admin dashboard with functionalities for managing tickets and users
     def build_admin_dashboard(self):
-        self.clear_screen()
+        self.clear_screen()  # Clear the screen
         tk.Label(self.root, text="Admin Dashboard", font=("Arial", 20)).pack(pady=20)
 
-        # Admin functionalities
+        # Buttons for admin functionalities
         tk.Button(self.root, text="View Ticket Sales Summary", command=self.view_ticket_sales_summary).pack(pady=10)
         tk.Button(self.root, text="Manage Tickets", command=self.manage_tickets).pack(pady=10)
         tk.Button(self.root, text="Manage Users", command=self.manage_users).pack(pady=10)
         tk.Button(self.root, text="Logout", command=self.build_login_screen).pack(pady=10)
 
+        # Save the admin dashboard state
         self.save_data("admin_dashboard.pkl", self.admin_dashboard)
 
+    # ------------------ Ticket Sales Summary ------------------
+    # Displays a summary of ticket sales for the admin
     def view_ticket_sales_summary(self):
-        self.clear_screen()
+        self.clear_screen()  # Clear the screen
         tk.Label(self.root, text="Ticket Sales Summary", font=("Arial", 20)).pack(pady=20)
 
+        # Fetch and display ticket sales data
         summary = self.admin_dashboard.view_ticket_sales()
         tk.Label(self.root, text=summary, font=("Arial", 14), anchor="w", justify="left").pack(pady=20)
 
+        # Button to return to the admin dashboard
         tk.Button(self.root, text="Back to Admin Dashboard", command=self.build_admin_dashboard).pack(pady=10)
 
-    # --- Manage Tickets ---
+    # ------------------ Manage Tickets ------------------
+    # Allows the admin to view, add, or delete tickets
     def manage_tickets(self):
-        self.clear_screen()
+        self.clear_screen()  # Clear the screen
         tk.Label(self.root, text="Manage Tickets", font=("Arial", 20)).pack(pady=20)
 
-        # Display all tickets with Delete buttons
+        # Display all tickets with options to delete
         for ticket in self.available_tickets:
             frame = tk.Frame(self.root)
             frame.pack(pady=5, anchor="w", padx=20)
@@ -367,29 +398,31 @@ class TicketBookingApp:
             ticket_details = f"{ticket.ticket_id}: {ticket.ticket_type} - {ticket.price} DHS ({ticket.validity})"
             tk.Label(frame, text=ticket_details, font=("Arial", 12), anchor="w", justify="left").pack(side="left")
 
-            # Delete button for the ticket
+            # Add delete button for each ticket
             delete_button = tk.Button(frame, text="Delete", command=lambda t=ticket: self.delete_ticket(t), bg="red",
                                       fg="white")
             delete_button.pack(side="right", padx=10)
 
-        # Add a button to go back or add new tickets
+        # Buttons to add a new ticket or return to the dashboard
         tk.Button(self.root, text="Add Ticket", command=self.add_ticket_screen).pack(pady=10)
         tk.Button(self.root, text="Back to Admin Dashboard", command=self.build_admin_dashboard).pack(pady=20)
 
+    # Deletes a selected ticket and updates the data file
     def delete_ticket(self, ticket):
-        """Delete a ticket and update the data file."""
         if ticket in self.available_tickets:
             self.available_tickets.remove(ticket)
-            self.save_data("tickets.pkl", self.available_tickets)
+            self.save_data("tickets.pkl", self.available_tickets)  # Save updated ticket list
             messagebox.showinfo("Success", "Ticket deleted successfully!")
-            self.manage_tickets()
+            self.manage_tickets()  # Refresh the ticket management screen
         else:
             messagebox.showerror("Error", "Ticket not found!")
 
+    # Screen for adding a new ticket
     def add_ticket_screen(self):
         self.clear_screen()
         tk.Label(self.root, text="Add New Ticket", font=("Arial", 20)).pack(pady=20)
 
+        # Input fields for ticket details
         tk.Label(self.root, text="Ticket Type:").pack(pady=5)
         ticket_type_entry = tk.Entry(self.root, width=30)
         ticket_type_entry.pack()
@@ -402,11 +435,13 @@ class TicketBookingApp:
         validity_entry = tk.Entry(self.root, width=30)
         validity_entry.pack()
 
+        # Save the new ticket
         def save_ticket():
             ticket_type = ticket_type_entry.get()
             price = float(price_entry.get())
             validity = validity_entry.get()
 
+            # Create a new ticket and add it to the list
             new_ticket = Ticket(self.ticket_id_counter, ticket_type, price, validity)
             self.ticket_id_counter += 1
             self.available_tickets.append(new_ticket)
@@ -418,52 +453,59 @@ class TicketBookingApp:
         tk.Button(self.root, text="Save Ticket", command=save_ticket).pack(pady=10)
         tk.Button(self.root, text="Back to Manage Tickets", command=self.manage_tickets).pack(pady=10)
 
-    # --- Manage Users ---
+    # ------------------ Manage Users ------------------
+    # Allows the admin to view and delete user accounts
     def manage_users(self):
-        self.clear_screen()
+        self.clear_screen()  # Clear the screen
         tk.Label(self.root, text="Manage Users", font=("Arial", 20)).pack(pady=20)
 
-        # Display all users with Delete buttons
+        # Display all users with options to delete
         for email, customer in list(self.customers.items()):
             frame = tk.Frame(self.root)
             frame.pack(pady=5, anchor="w", padx=20)
 
-            # Display user details
+            # Display customer details
             customer_details = f"{customer.customer_id}: {customer.name} ({customer.email})"
             tk.Label(frame, text=customer_details, font=("Arial", 12), anchor="w", justify="left").pack(side="left")
 
-            # Delete button for the user
+            # Add delete button for each customer
             delete_button = tk.Button(frame, text="Delete", command=lambda e=email: self.delete_user(e), bg="red",
                                       fg="white")
             delete_button.pack(side="right", padx=10)
 
+        # Button to return to the admin dashboard
         tk.Button(self.root, text="Back to Admin Dashboard", command=self.build_admin_dashboard).pack(pady=20)
 
+    # Deletes a selected user and updates the customer database
     def delete_user(self, email):
-        """Delete a user and update the data file."""
         if email in self.customers:
             del self.customers[email]
-            self.save_data("customers.pkl", self.customers)
+            self.save_data("customers.pkl", self.customers)  # Save updated customer data
             messagebox.showinfo("Success", "User deleted successfully!")
-            self.manage_users()
+            self.manage_users()  # Refresh the user management screen
         else:
             messagebox.showerror("Error", "User not found!")
 
-    # --- Customer Side ---
+    # ------------------ Customer Login ------------------
+    # Handles login functionality for customers
     def login(self):
-        email = self.email_entry.get()
-        password = self.password_entry.get()
+        email = self.email_entry.get()  # Retrieve entered email
+        password = self.password_entry.get()  # Retrieve entered password
 
+        # Validate login credentials
         if email in self.customers and self.customers[email].password == password:
-            self.current_customer = self.customers[email]
-            self.ticket_selection_screen()
+            self.current_customer = self.customers[email]  # Set the logged-in customer
+            self.ticket_selection_screen()  # Navigate to the ticket selection screen
         else:
             messagebox.showerror("Error", "Invalid email or password.")
 
+    # ------------------ Account Creation ------------------
+    # Builds the screen for creating a new customer account
     def create_account_screen(self):
         self.clear_screen()
-        tk.Label(self.root, text="Create new Account", font=("Arial", 20)).pack(pady=20)
+        tk.Label(self.root, text="Create New Account", font=("Arial", 20)).pack(pady=20)
 
+        # Input fields for new account details
         tk.Label(self.root, text="Name:").pack(pady=5)
         self.name_entry = tk.Entry(self.root, width=30)
         self.name_entry.pack()
@@ -476,34 +518,42 @@ class TicketBookingApp:
         self.password_entry = tk.Entry(self.root, width=30, show="*")
         self.password_entry.pack()
 
-        tk.Button(self.root, text="Create new Account", command=self.create_account).pack(pady=10)
+        # Buttons to create an account or go back to login
+        tk.Button(self.root, text="Create New Account", command=self.create_account).pack(pady=10)
         tk.Button(self.root, text="Back to Login", command=self.build_login_screen).pack(pady=5)
 
+    # Validates and saves a new customer account
     def create_account(self):
         name = self.name_entry.get()
         email = self.email_entry.get()
         password = self.password_entry.get()
 
+        # Check if the email already exists
         if email in self.customers:
             messagebox.showerror("Error", "An account with this email already exists.")
             return
 
+        # Ensure all fields are filled
         if not name or not email or not password:
             messagebox.showerror("Error", "All fields are required.")
             return
 
+        # Create a new customer object and add it to the customer database
         new_customer = Customer(customer_id=len(self.customers) + 1, name=name, email=email, password=password)
         self.customers[email] = new_customer
-        self.save_data("customers.pkl", self.customers)
+        self.save_data("customers.pkl", self.customers)  # Save updated customer data
 
         messagebox.showinfo("Success", "Account created successfully!")
-        self.build_login_screen()
+        self.build_login_screen()  # Return to the login screen
 
+    # ------------------ Ticket Selection Screen ------------------
+    # Allows the logged-in customer to select tickets for an order
     def ticket_selection_screen(self):
         self.clear_screen()
         tk.Label(self.root, text=f"Welcome back, {self.current_customer.name}", font=("Arial", 20)).pack(pady=20)
-        tk.Label(self.root, text="Select your preffered Ticket", font=("Arial", 14)).pack(pady=10)
+        tk.Label(self.root, text="Select Your Preferred Ticket", font=("Arial", 14)).pack(pady=10)
 
+        # Display available tickets with buttons to add them to the current order
         for ticket in self.available_tickets:
             ticket_details = f"{ticket.ticket_type} - {ticket.price} DHS ({ticket.validity})"
             tk.Button(
@@ -513,11 +563,14 @@ class TicketBookingApp:
                 width=50
             ).pack(pady=5)
 
+        # Buttons for finalizing the order, viewing order history, or logging out
         tk.Button(self.root, text="Confirm Order", command=self.finalize_order).pack(pady=10)
         tk.Button(self.root, text="View Order History", command=self.view_order_history).pack(pady=10)
         tk.Button(self.root, text="Logout", command=self.build_login_screen).pack(pady=5)
 
+    # Adds a selected ticket to the current order
     def add_ticket_to_order(self, ticket):
+        # Create a new order if none exists
         if not self.current_order:
             self.current_order = Order(
                 order_id=self.order_id_counter,
@@ -525,52 +578,67 @@ class TicketBookingApp:
             )
             self.order_id_counter += 1
 
-        self.current_order.add_ticket(ticket)
+        self.current_order.add_ticket(ticket)  # Add the ticket to the order
         messagebox.showinfo("Success", f"{ticket.ticket_type} added to your order!")
 
+    # Finalizes the current order and moves to the payment interface
     def finalize_order(self):
+        # Check if there are tickets in the current order
         if not self.current_order or not self.current_order.tickets:
             messagebox.showerror("Error", "No tickets added to the order.")
             return
 
-        self.payment_interface()
+        self.payment_interface()  # Navigate to the payment screen
 
+    # ------------------ Payment Interface ------------------
+    # Allows the customer to finalize the payment for their order
     def payment_interface(self):
         self.clear_screen()
         tk.Label(self.root, text="Finalize Payment", font=("Arial", 20)).pack(pady=20)
         tk.Label(self.root, text="Choose Payment Method:", font=("Arial", 14)).pack(pady=10)
 
+        # Payment options
         def confirm_payment(method):
+            # Add the order to the customer's history and admin sales data
             self.current_customer.add_order(self.current_order)
             self.admin_dashboard.add_sale(self.current_order)
 
+            # Save updated data
             self.save_data("customers.pkl", self.customers)
             self.save_data("admin_dashboard.pkl", self.admin_dashboard)
 
-            self.current_order = None
+            self.current_order = None  # Reset the current order
             messagebox.showinfo("Success", f"Payment successful using {method}!")
-            self.ticket_selection_screen()
+            self.ticket_selection_screen()  # Return to the ticket selection screen
 
         tk.Button(self.root, text="Pay using Credit Card", command=lambda: confirm_payment("Credit Card")).pack(pady=10)
         tk.Button(self.root, text="Pay using Debit Card", command=lambda: confirm_payment("Debit Card")).pack(pady=10)
 
+        # Button to return to ticket selection
         tk.Button(self.root, text="Back to Tickets", command=self.ticket_selection_screen).pack(pady=10)
 
+    # ------------------ Order History ------------------
+    # Displays the order history for the logged-in customer
     def view_order_history(self):
         self.clear_screen()
         tk.Label(self.root, text="Order History", font=("Arial", 20)).pack(pady=20)
 
+        # Check if the customer has any orders
         if not self.current_customer.order_history:
             tk.Label(self.root, text="No orders found.", font=("Arial", 14)).pack(pady=10)
         else:
+            # Display each order's summary
             for order in self.current_customer.order_history:
                 order_summary = order.display_summary()
                 tk.Label(self.root, text=order_summary, font=("Arial", 12), anchor="w", justify="left").pack(pady=10)
 
+        # Button to return to ticket selection
         tk.Button(self.root, text="Back", command=self.ticket_selection_screen).pack(pady=10)
 
 
+# Run the application
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = TicketBookingApp(root)
-    root.mainloop()
+    root = tk.Tk()  # Create the root window
+    app = TicketBookingApp(root)  # Create an instance of the application
+    root.mainloop()  # Run the application loop
+
